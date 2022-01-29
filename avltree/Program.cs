@@ -49,7 +49,7 @@ class Tree
             return;
         }
 
-        InsertAt(root, value);
+        root = InsertAt(root, value);
     }
 
     private Node InsertAt(Node? parent, int value)
@@ -108,7 +108,7 @@ class Tree
         Node savedRight = node.right;
         node.right = savedRight.left; // Move old right's left tree to new right tree
         savedRight.left = node;
-
+        Console.WriteLine("LEFT, {0}{1}{2}{3}", node == null, savedRight == null, savedRight.left == null, savedRight.right == null);
         // Update heights
         node.height = GetNewHeight(node);
         savedRight.height = GetNewHeight(savedRight);
