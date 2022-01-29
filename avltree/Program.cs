@@ -53,12 +53,6 @@ class Tree
 
     public void Insert(int value)
     {
-        if (root == null)
-        {
-            root = new Node(value);
-            return;
-        }
-
         root = InsertAt(root, value);
     }
 
