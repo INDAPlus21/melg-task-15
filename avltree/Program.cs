@@ -5,16 +5,26 @@ Console.WriteLine("Running unit tests");
 Tree tree = new Tree();
 Debug.Assert(tree.GetBalance() == 0);
 Debug.Assert(tree.GetHeight() == -1);
-//tree.Insert(new int[] { 3, 1, 2, 5, 10, 20, 15, 4, 17 });
 tree.Insert(new int[] { 1, 2 });
 tree.PrintTree();
-tree.Search(2);
-tree.Search(3);
-Console.WriteLine("INS");
+Debug.Assert(tree.Search(2) != null);
+Debug.Assert(tree.Search(3) == null);
 tree.Insert(3);
+tree.PrintTree();
+tree.Clear();
+tree.Insert(new int[] { 3, 1, 2, 5, 10, 20, 15, 4, 17 });
+Debug.Assert(tree.Search(17) != null);
+Debug.Assert(tree.GetHeight() == 3);
+Debug.Assert(tree.GetBalance() == 0);
+tree.PrintTree();
+tree.Clear();
+tree.Insert(new int[] { 3, 1, 2 });
+Debug.Assert(tree.GetHeight() == 1);
+Debug.Assert(tree.GetBalance() == 0);
 tree.PrintTree();
 
 Console.WriteLine("Unit tests completed");
+
 class Node
 {
     public Node(int value)
@@ -108,7 +118,7 @@ class Tree
         Node savedRight = node.right;
         node.right = savedRight.left; // Move old right's left tree to new right tree
         savedRight.left = node;
-        Console.WriteLine("LEFT, {0}{1}{2}{3}", node == null, savedRight == null, savedRight.left == null, savedRight.right == null);
+
         // Update heights
         node.height = GetNewHeight(node);
         savedRight.height = GetNewHeight(savedRight);
@@ -178,6 +188,7 @@ class Tree
 
     public void PrintTree()
     {
+        Console.WriteLine("Tree:");
         if (root == null)
         {
             return;
@@ -189,24 +200,38 @@ class Tree
 
         while (currentNodes.Count() > 0)
         {
+            bool nonNullFound = false;
+
             // Print all nodes on this level
             while (currentNodes.Count() > 0)
             {
                 Node node = currentNodes.Dequeue();
-                Console.Write("{0} ", node.value);
-                Console.Write("TEST {0}{1}", node.left == null, node.right == null);
-                if (node.left != null)
+
+                if (node == null)
                 {
-                    nextNodes.Enqueue(node.left);
+                    // Add empty node to be able to print out spaces
+                    Console.Write("   ");
+
+                    nextNodes.Enqueue(null);
+                    nextNodes.Enqueue(null);
                 }
-                if (node.right != null)
+                else
                 {
+                    nonNullFound = true;
+                    Console.Write(node.value < 10 ? node.value + "  " : node.value + " ");
+
+                    nextNodes.Enqueue(node.left);
                     nextNodes.Enqueue(node.right);
                 }
             }
 
             Console.Write("\n");
-            Console.WriteLine(nextNodes.Count());
+
+            if (!nonNullFound)
+            {
+                break;
+            }
+
             // Prepare for next iteration
             currentNodes = new Queue<Node>(nextNodes);
             nextNodes.Clear();
