@@ -7,16 +7,24 @@ Debug.Assert(tree.GetBalance() == 0);
 Debug.Assert(tree.GetHeight() == -1);
 tree.Insert(new int[] { 1, 2 });
 tree.PrintTree();
-Debug.Assert(tree.Search(2) != null);
-Debug.Assert(tree.Search(3) == null);
+Debug.Assert(tree.Search(2).Item1 != null);
+Debug.Assert(tree.Search(3).Item1 == null);
 tree.Insert(3);
 tree.PrintTree();
+
 tree.Clear();
 tree.Insert(new int[] { 3, 1, 2, 5, 10, 20, 15, 4, 17 });
-Debug.Assert(tree.Search(17) != null);
+Debug.Assert(tree.Search(17).Item1 != null);
 Debug.Assert(tree.GetHeight() == 3);
 Debug.Assert(tree.GetBalance() == 0);
 tree.PrintTree();
+tree.Remove(2);
+tree.PrintTree();
+tree.Remove(15);
+tree.PrintTree();
+tree.Remove(5);
+tree.PrintTree();
+
 tree.Clear();
 tree.Insert(new int[] { 3, 1, 2 });
 Debug.Assert(tree.GetHeight() == 1);
@@ -107,6 +115,122 @@ class Tree
         return parent;
     }
 
+    public void Remove(int value)
+    {
+        var (node, parent) = Search(value, false);
+
+        if (node == null)
+        {
+            return;
+        }
+
+        // No children
+        if (node.left == null && node.right == null)
+        {
+            if (node == root)
+            {
+                root = null;
+            }
+            else
+            {
+                if (node == parent.left)
+                {
+                    parent.left = null;
+                }
+                else
+                {
+                    parent.right = null;
+                }
+            }
+        }
+        // One child
+        else if (node.left == null ^ node.right == null)
+        {
+            if (node == root)
+            {
+                root = node.left == null ? node.right : node.left;
+            }
+            else
+            {
+                if (node == parent.left)
+                {
+                    parent.left = node.left == null ? node.right : node.left;
+                }
+                else
+                {
+                    parent.right = node.left == null ? node.right : node.left;
+                }
+            }
+        }
+        // Two children
+        else
+        {
+            // Swap with min in right tree
+            var (minNode, minParent) = FindMininumValue(node.right, node);
+            node.value = minNode.value;
+
+            if (minParent.left == minNode)
+            {
+                minParent.left = null;
+            }
+            else
+            {
+                minParent.right = null;
+            }
+
+            // Update height
+            UpdateHeightChildren(node.right);
+            node.height = GetNewHeight(node);
+
+            // Rebalance
+            int balance = GetBalance(node);
+            // Left heavy
+            if (balance > 1)
+            {
+                if (GetBalance(node.left) >= 0)
+                {
+                    node = RotateRight(node);
+                }
+                else
+                {
+                    node.left = RotateLeft(node.left);
+                    node = RotateRight(node);
+                }
+            }
+            // Right heavy
+            else if (balance < -1)
+            {
+                if (GetBalance(node.right) <= 0)
+                {
+                    node = RotateLeft(node);
+                }
+                else
+                {
+                    node.right = RotateRight(node.right);
+                    node = RotateLeft(node);
+                }
+            }
+
+            // Update root
+            if (parent == null)
+            {
+                root = node;
+            }
+        }
+    }
+
+    private (Node, Node) FindMininumValue(Node node, Node parent)
+    {
+        if (node.left == null)
+        {
+            return (node, parent);
+        }
+        else
+        {
+            return FindMininumValue(node.left, node);
+        }
+    }
+
     private Node RotateLeft(Node node)
     {
         Node savedRight = node.right;
@@ -157,6 +281,19 @@ class Tree
         }
 
         return Math.Max(GetHeight(node.left), GetHeight(node.right)) + 1;
+    }
+
+    public void UpdateHeightChildren(Node node)
+    {
+        if (node == null)
+        {
+            return;
+        }
+
+        UpdateHeightChildren(node.left);
+        UpdateHeightChildren(node.right);
+
+        node.height = Math.Max(GetHeight(node.left), GetHeight(node.right)) + 1;
     }
 
     public int GetBalance()
@@ -232,23 +369,29 @@ class Tree
         }
     }
 
-    public Node? Search(int value)
+    // Returns found node and it's parent
+    public (Node?, Node?) Search(int value, bool print = false)
     {
         if (root == null)
         {
-            return null;
+            return (null, null);
         }
 
+        Node? currentNode = null;
         Node? nextNode = root;
 
         while (nextNode != null)
         {
             if (nextNode.value == value)
             {
-                Console.WriteLine("Found node with value {0}", value);
-                return nextNode;
+                if (print)
+                {
+                    Console.WriteLine("Found node with value {0}", value);
+                }
+                return (nextNode, currentNode);
             }
 
+            currentNode = nextNode;
             if (value < nextNode.value)
             {
                 nextNode = nextNode.left;
@@ -259,6 +402,6 @@ class Tree
             }
         }
 
-        return null;
+        return (null, null);
     }
 }
